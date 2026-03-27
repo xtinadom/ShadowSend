@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { getSiteUrl } from "@/lib/site";
 import type { ProductId } from "@/lib/products";
 import type { CartLine } from "@/lib/cart-store";
 
@@ -43,9 +44,7 @@ export async function POST(request: Request) {
   }
 
   const origin =
-    request.headers.get("origin") ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000";
+    request.headers.get("origin") ?? getSiteUrl();
 
   const stripeConfigured =
     typeof process.env.STRIPE_SECRET_KEY === "string" &&
