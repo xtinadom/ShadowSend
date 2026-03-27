@@ -126,6 +126,8 @@ export async function POST(request: Request) {
 
       mode: "payment",
 
+      payment_method_types: ["card"],
+
       line_items,
 
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
