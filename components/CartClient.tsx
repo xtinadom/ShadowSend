@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCartStore } from "@/lib/cart-store";
 import { PRODUCTS, type ProductId } from "@/lib/products";
 import { formatUsd } from "@/lib/format";
@@ -16,6 +16,29 @@ export function CartClient() {
   const remove = useCartStore((s) => s.remove);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState<{
+    ready: boolean;
+    missing: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/stripe-status")
+      .then((res) => res.json() as Promise<{ stripeReady?: boolean; missing?: string[] }>)
+      .then((data) => {
+        if (cancelled) return;
+        setStripeStatus({
+          ready: data.stripeReady === true,
+          missing: Array.isArray(data.missing) ? data.missing : [],
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setStripeStatus({ ready: false, missing: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const subtotal = useMemo(() => {
     return lines.reduce(
@@ -66,6 +89,33 @@ export function CartClient() {
 
   return (
     <div className="mt-10 space-y-6">
+      {stripeStatus && !stripeStatus.ready ? (
+        <div
+          className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          <p className="font-medium text-amber-50">
+            Checkout is in demo mode — Stripe is not fully configured on this
+            server.
+          </p>
+          {stripeStatus.missing.length > 0 ? (
+            <p className="mt-2 text-amber-100/90">
+              Missing environment variables:{" "}
+              {stripeStatus.missing.join(", ")}.
+            </p>
+          ) : null}
+          <p className="mt-2 text-amber-100/80">
+            In Vercel: Project → Settings → Environment Variables (enable{" "}
+            <strong className="font-medium">Production</strong>), add the
+            secret key and three Price IDs, then{" "}
+            <strong className="font-medium">Redeploy</strong>. For local dev,
+            copy <code className="rounded bg-black/30 px-1">.env.example</code>{" "}
+            to <code className="rounded bg-black/30 px-1">.env.local</code> and
+            fill in values.
+          </p>
+        </div>
+      ) : null}
+
       <ul className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] bg-[var(--card)]">
         {lines.map((line) => {
           const p = PRODUCTS[line.productId];
@@ -124,7 +174,9 @@ export function CartClient() {
           &quot;Xtinadom LLC&quot;.
         </p>
         {checkoutError ? (
-          <p className="text-sm text-red-400">{checkoutError}</p>
+          <p className="max-w-md text-left text-sm break-words text-red-400">
+            {checkoutError}
+          </p>
         ) : null}
         <button
           type="button"

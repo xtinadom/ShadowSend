@@ -20,7 +20,7 @@ export default async function SuccessPage({ searchParams }: Props) {
       <h1 className="text-3xl font-semibold tracking-tight">Thank you</h1>
       <p className="mt-4 text-[var(--muted)]">
         {isMock
-          ? "Your order was confirmed (demo checkout)."
+          ? "Your order was confirmed in demo mode (Stripe is not configured on this deployment). Configure STRIPE_SECRET_KEY and the three Price ID variables in Vercel, then redeploy."
           : "Your payment was submitted through Stripe. You will receive a receipt by email if one was provided at checkout."}
       </p>
       {sessionId ? (
