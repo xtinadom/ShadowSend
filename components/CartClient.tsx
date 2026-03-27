@@ -169,9 +169,8 @@ export function CartClient() {
           <span className="font-semibold">{formatUsd(subtotal)}</span>
         </p>
         <p className="max-w-md text-right text-xs text-[var(--muted)]">
-          Checkout is handled securely (Stripe when configured). Totals here use
-          list prices for reference. Billing statement will show as
-          &quot;Xtinadom LLC&quot;.
+          Checkout is handled securely by Stripe. Totals here use list prices
+          for reference. Your statement will show as &quot;Xtinadom LLC&quot;.
         </p>
         {checkoutError ? (
           <p className="max-w-md text-left text-sm break-words text-red-400">
