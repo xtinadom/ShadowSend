@@ -67,15 +67,13 @@ export async function POST(request: Request) {
   }
 
   const hasTestZero = lines.some((l) => l.productId === "testZero");
-  const hasPaidProduct = lines.some(
-    (l) => PRODUCTS[l.productId].priceCentsFallback > 0,
-  );
+  const hasPaidCatalogProduct = lines.some((l) => l.productId !== "testZero");
 
-  if (hasTestZero && hasPaidProduct) {
+  if (hasTestZero && hasPaidCatalogProduct) {
     return NextResponse.json(
       {
         error:
-          "Remove the $0 test product from your cart to pay for services, or check out with only the test product.",
+          "Remove the test checkout item from your cart to pay for services, or check out with only the test item.",
       },
       { status: 400 },
     );
@@ -87,6 +85,13 @@ export async function POST(request: Request) {
 
   const { ok: stripeConfigured } = stripeEnvReady();
 
+  const cartOnlyTestZero =
+    lines.length > 0 && lines.every((l) => l.productId === "testZero");
+
+  const canUseStripe =
+    stripeConfigured ||
+    (cartOnlyTestZero && stripeTestCheckoutReady());
+
   const useStripeForZeroTest =
     subtotalCents === 0 && stripeTestCheckoutReady();
 
@@ -97,7 +102,17 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!stripeConfigured && subtotalCents > 0) {
+  if (!canUseStripe && subtotalCents > 0) {
+    if (cartOnlyTestZero) {
+      return NextResponse.json(
+        {
+          error:
+            "Test checkout is not configured. Add STRIPE_SECRET_KEY and STRIPE_PRICE_TEST_ZERO to your host (e.g. Vercel), then redeploy.",
+        },
+        { status: 503 },
+      );
+    }
+
     const mockSessionId = `mock_${Date.now().toString(36)}`;
 
     return NextResponse.json({

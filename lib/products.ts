@@ -64,14 +64,14 @@ export const PRODUCTS: Record<ProductId, Product> = {
   },
   testZero: {
     id: "testZero",
-    name: "$0 test checkout",
+    name: "$0.50 test checkout",
     shortDescription:
-      "Internal testing — opens real Stripe Checkout when the server has your test Price ID.",
-    priceCentsFallback: 0,
+      "Internal testing — real Stripe Checkout using your test Price ID ($0.50).",
+    priceCentsFallback: 50,
     priceIdEnv: "NEXT_PUBLIC_STRIPE_PRICE_TEST_ZERO",
     features: [
-      "Uses the same Checkout + success flow as paid services when configured",
-      "Do not mix with paid services in the same cart",
+      "Same Stripe Checkout + success flow as paid services",
+      "Do not mix with other services in the same cart",
     ],
     tracking: false,
   },

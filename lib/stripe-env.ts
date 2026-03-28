@@ -32,7 +32,7 @@ export function stripeSecretConfigured(): boolean {
   return Boolean(str(process.env.STRIPE_SECRET_KEY));
 }
 
-/** Real Stripe Checkout for the $0 test product only (secret + test Price ID). */
+/** Real Stripe Checkout for the test product only (secret + test Price ID). */
 export function stripeTestCheckoutReady(): boolean {
   return stripeSecretConfigured() && Boolean(priceIds().testZero);
 }
