@@ -3,12 +3,12 @@
 import { useEffect } from "react";
 import { useCartStore } from "@/lib/cart-store";
 
-export function SuccessClearCart({ sessionId }: { sessionId?: string }) {
+export function SuccessClearCart({ enabled }: { enabled: boolean }) {
   const clear = useCartStore((s) => s.clear);
 
   useEffect(() => {
-    if (sessionId) clear();
-  }, [sessionId, clear]);
+    if (enabled) clear();
+  }, [enabled, clear]);
 
   return null;
 }

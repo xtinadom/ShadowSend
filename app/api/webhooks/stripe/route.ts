@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+
 import { getStripe } from "@/lib/stripe";
+import { sendOrderConfirmationEmail } from "@/lib/send-order-confirmation-email";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -34,7 +36,29 @@ export async function POST(request: Request) {
       if (process.env.NODE_ENV === "development") {
         console.info("[stripe] checkout.session.completed", session.id);
       }
-      // Fulfillment: create order record, send email, etc.
+
+      const paid =
+        session.payment_status === "paid" ||
+        session.payment_status === "no_payment_required";
+      const to =
+        session.customer_details?.email ?? session.customer_email ?? null;
+      if (paid && to) {
+        const result = await sendOrderConfirmationEmail({
+          to,
+          customerName: session.customer_details?.name ?? null,
+          sessionId: session.id,
+          amountTotal: session.amount_total,
+          currency: session.currency,
+        });
+        if (!result.ok) {
+          console.warn("[stripe] order confirmation email skipped:", result.reason);
+        }
+      } else if (paid && !to) {
+        console.warn(
+          "[stripe] checkout.session.completed without customer email",
+          session.id,
+        );
+      }
       break;
     }
     default:
