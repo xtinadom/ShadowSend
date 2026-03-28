@@ -6,7 +6,11 @@ import { getSiteUrl } from "@/lib/site";
 
 import { PRODUCTS } from "@/lib/products";
 
-import { getStripePriceIds, stripeEnvReady } from "@/lib/stripe-env";
+import {
+  getStripePriceIds,
+  stripeEnvReady,
+  stripeTestCheckoutReady,
+} from "@/lib/stripe-env";
 
 import type { CartLine } from "@/lib/cart-store";
 
@@ -83,12 +87,8 @@ export async function POST(request: Request) {
 
   const { ok: stripeConfigured } = stripeEnvReady();
 
-  const testZeroStripePriceId = PRICE_BY_PRODUCT.testZero;
-
   const useStripeForZeroTest =
-    subtotalCents === 0 &&
-    stripeConfigured &&
-    Boolean(testZeroStripePriceId);
+    subtotalCents === 0 && stripeTestCheckoutReady();
 
   if (subtotalCents === 0 && !useStripeForZeroTest) {
     const sessionId = `free_test_${Date.now().toString(36)}`;
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!stripeConfigured) {
+  if (!stripeConfigured && subtotalCents > 0) {
     const mockSessionId = `mock_${Date.now().toString(36)}`;
 
     return NextResponse.json({

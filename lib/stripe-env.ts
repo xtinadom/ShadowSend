@@ -25,6 +25,16 @@ function priceIds(): Record<ProductId, string | undefined> {
   };
 }
 
+/** Secret key present (server-side checkout possible). */
+export function stripeSecretConfigured(): boolean {
+  return Boolean(env("STRIPE_SECRET_KEY"));
+}
+
+/** Real Stripe Checkout for the $0 test product only (secret + test Price ID). */
+export function stripeTestCheckoutReady(): boolean {
+  return stripeSecretConfigured() && Boolean(priceIds().testZero);
+}
+
 /** Non-empty secret + three price IDs (empty strings count as missing). */
 export function stripeEnvReady(): { ok: boolean; missing: string[] } {
   const missing: string[] = [];

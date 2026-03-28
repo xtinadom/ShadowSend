@@ -66,11 +66,11 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "testZero",
     name: "$0 test checkout",
     shortDescription:
-      "Internal testing only — completes without payment (no Stripe session).",
+      "Internal testing — opens real Stripe Checkout when the server has your test Price ID.",
     priceCentsFallback: 0,
     priceIdEnv: "NEXT_PUBLIC_STRIPE_PRICE_TEST_ZERO",
     features: [
-      "No charge; confirms cart and success flow only",
+      "Uses the same Checkout + success flow as paid services when configured",
       "Do not mix with paid services in the same cart",
     ],
     tracking: false,

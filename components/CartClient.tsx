@@ -19,21 +19,35 @@ export function CartClient() {
   const [stripeStatus, setStripeStatus] = useState<{
     ready: boolean;
     missing: string[];
+    testStripeReady: boolean;
   } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/stripe-status")
-      .then((res) => res.json() as Promise<{ stripeReady?: boolean; missing?: string[] }>)
+      .then(
+        (res) =>
+          res.json() as Promise<{
+            stripeReady?: boolean;
+            missing?: string[];
+            testStripeReady?: boolean;
+          }>,
+      )
       .then((data) => {
         if (cancelled) return;
         setStripeStatus({
           ready: data.stripeReady === true,
           missing: Array.isArray(data.missing) ? data.missing : [],
+          testStripeReady: data.testStripeReady === true,
         });
       })
       .catch(() => {
-        if (!cancelled) setStripeStatus({ ready: false, missing: [] });
+        if (!cancelled)
+          setStripeStatus({
+            ready: false,
+            missing: [],
+            testStripeReady: false,
+          });
       });
     return () => {
       cancelled = true;
@@ -46,6 +60,16 @@ export function CartClient() {
       0,
     );
   }, [lines]);
+
+  const cartOnlyTestZero = useMemo(
+    () => lines.length > 0 && lines.every((l) => l.productId === "testZero"),
+    [lines],
+  );
+
+  const showDemoBanner =
+    stripeStatus != null &&
+    !stripeStatus.ready &&
+    !(stripeStatus.testStripeReady && cartOnlyTestZero);
 
   async function checkout() {
     setCheckoutError(null);
@@ -89,7 +113,7 @@ export function CartClient() {
 
   return (
     <div className="mt-10 space-y-6">
-      {stripeStatus && !stripeStatus.ready ? (
+      {showDemoBanner ? (
         <div
           className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
           role="status"
