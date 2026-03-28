@@ -6,11 +6,9 @@ import { getSiteUrl } from "@/lib/site";
 
 import { PRODUCTS } from "@/lib/products";
 
-import {
-  getStripePriceIds,
-  stripeEnvReady,
-  stripeTestCheckoutReady,
-} from "@/lib/stripe-env";
+import { buildCheckoutLineItems } from "@/lib/checkout-line-items";
+
+import { getStripePriceIds, stripeSecretConfigured } from "@/lib/stripe-env";
 
 import type { CartLine } from "@/lib/cart-store";
 
@@ -54,16 +52,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid line item" }, { status: 400 });
     }
 
-    const priceId = PRICE_BY_PRODUCT[line.productId];
-
-    if (!priceId) {
-      // If Stripe isn't configured, we allow a mock checkout for local development.
-
-      // The cart UI still works and the success page clears the cart.
-
-      // In real checkout mode, we validate Price IDs strictly below.
-
-    }
   }
 
   const hasTestZero = lines.some((l) => l.productId === "testZero");
@@ -83,17 +71,13 @@ export async function POST(request: Request) {
 
   const subtotalCents = cartSubtotalCents(lines);
 
-  const { ok: stripeConfigured } = stripeEnvReady();
-
   const cartOnlyTestZero =
     lines.length > 0 && lines.every((l) => l.productId === "testZero");
 
-  const canUseStripe =
-    stripeConfigured ||
-    (cartOnlyTestZero && stripeTestCheckoutReady());
+  const canUseStripe = stripeSecretConfigured();
 
   const useStripeForZeroTest =
-    subtotalCents === 0 && stripeTestCheckoutReady();
+    subtotalCents === 0 && stripeSecretConfigured();
 
   if (subtotalCents === 0 && !useStripeForZeroTest) {
     const sessionId = `free_test_${Date.now().toString(36)}`;
@@ -107,7 +91,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Test checkout is not configured. Add STRIPE_SECRET_KEY and STRIPE_PRICE_TEST_ZERO to your host (e.g. Vercel), then redeploy.",
+            "Test checkout is not configured. Add STRIPE_SECRET_KEY to your host (e.g. Vercel), then redeploy.",
         },
         { status: 503 },
       );
@@ -122,12 +106,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const line_items: { price: string; quantity: number }[] = lines.map(
-    (line) => ({
-      price: PRICE_BY_PRODUCT[line.productId] as string,
-      quantity: line.quantity,
-    }),
-  );
+  const line_items = buildCheckoutLineItems(lines, PRICE_BY_PRODUCT);
 
   try {
     const session = await getStripe().checkout.sessions.create({

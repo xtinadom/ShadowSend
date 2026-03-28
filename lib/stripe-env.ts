@@ -32,9 +32,9 @@ export function stripeSecretConfigured(): boolean {
   return Boolean(str(process.env.STRIPE_SECRET_KEY));
 }
 
-/** Real Stripe Checkout for the test product only (secret + test Price ID). */
+/** Enough for real Checkout on a test-only cart (secret key; line items use Price ID or inline amount). */
 export function stripeTestCheckoutReady(): boolean {
-  return stripeSecretConfigured() && Boolean(priceIds().testZero);
+  return stripeSecretConfigured();
 }
 
 /** Non-empty secret + three price IDs (empty strings count as missing). */
