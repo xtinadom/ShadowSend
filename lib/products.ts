@@ -1,4 +1,4 @@
-export type ProductId = "standard" | "paperOnly" | "tracked";
+export type ProductId = "standard" | "paperOnly" | "tracked" | "testZero";
 
 export type Product = {
   id: ProductId;
@@ -10,7 +10,8 @@ export type Product = {
   priceIdEnv:
     | "NEXT_PUBLIC_STRIPE_PRICE_STANDARD"
     | "NEXT_PUBLIC_STRIPE_PRICE_PAPER_ONLY"
-    | "NEXT_PUBLIC_STRIPE_PRICE_TRACKED";
+    | "NEXT_PUBLIC_STRIPE_PRICE_TRACKED"
+    | "NEXT_PUBLIC_STRIPE_PRICE_TEST_ZERO";
   features: string[];
   tracking: boolean;
 };
@@ -60,6 +61,19 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "Delivery scan updates where the carrier supports them",
     ],
     tracking: true,
+  },
+  testZero: {
+    id: "testZero",
+    name: "$0 test checkout",
+    shortDescription:
+      "Internal testing only — completes without payment (no Stripe session).",
+    priceCentsFallback: 0,
+    priceIdEnv: "NEXT_PUBLIC_STRIPE_PRICE_TEST_ZERO",
+    features: [
+      "No charge; confirms cart and success flow only",
+      "Do not mix with paid services in the same cart",
+    ],
+    tracking: false,
   },
 };
 

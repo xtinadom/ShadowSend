@@ -11,6 +11,7 @@ export default function ServicesPage() {
   const standard = PRODUCTS.standard;
   const paperOnly = PRODUCTS.paperOnly;
   const tracked = PRODUCTS.tracked;
+  const testZero = PRODUCTS.testZero;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
@@ -124,6 +125,26 @@ export default function ServicesPage() {
               ))}
             </ul>
             <AddToCartButton productId="tracked" className="mt-6" />
+          </article>
+        </div>
+        <div className="mt-8 rounded-xl border border-dashed border-amber-500/50 bg-amber-500/5 p-6">
+          <p className="text-xs font-medium uppercase tracking-wide text-amber-200/90">
+            Internal testing
+          </p>
+          <article className="mt-3">
+            <h3 className="font-semibold">{testZero.name}</h3>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              {testZero.shortDescription}
+            </p>
+            <p className="mt-4 text-2xl font-semibold">
+              {formatUsd(testZero.priceCentsFallback)} / checkout
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-[var(--muted)]">
+              {testZero.features.map((f) => (
+                <li key={f}>• {f}</li>
+              ))}
+            </ul>
+            <AddToCartButton productId="testZero" className="mt-6" />
           </article>
         </div>
       </section>

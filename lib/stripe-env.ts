@@ -19,6 +19,9 @@ function priceIds(): Record<ProductId, string | undefined> {
       env("NEXT_PUBLIC_STRIPE_PRICE_PAPER_ONLY"),
     tracked:
       env("STRIPE_PRICE_TRACKED") ?? env("NEXT_PUBLIC_STRIPE_PRICE_TRACKED"),
+    testZero:
+      env("STRIPE_PRICE_TEST_ZERO") ??
+      env("NEXT_PUBLIC_STRIPE_PRICE_TEST_ZERO"),
   };
 }
 
