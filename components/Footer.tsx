@@ -4,6 +4,7 @@ const footerLinks = [
   { href: "/services", label: "Service details" },
   { href: "/restricted-items", label: "Restricted items" },
   { href: "/faq", label: "FAQ" },
+  { href: "/privacy", label: "Privacy" },
   { href: "/contact", label: "Contact" },
   { href: "/cart", label: "Cart" },
 ];
@@ -34,7 +35,12 @@ export function Footer() {
         <div className="mt-8 flex flex-col gap-2 border-t border-[var(--border)] pt-8 text-xs text-[var(--muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} ShadowSend. All rights reserved.</p>
           <div className="flex gap-4">
-            <span className="cursor-default">Privacy policy (placeholder)</span>
+            <Link
+              href="/privacy"
+              className="transition hover:text-[var(--foreground)]"
+            >
+              Privacy policy
+            </Link>
             <span className="cursor-default">Terms (placeholder)</span>
           </div>
         </div>

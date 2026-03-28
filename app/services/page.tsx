@@ -65,7 +65,11 @@ export default function ServicesPage() {
             <Link href="/faq" className="text-[var(--accent)] hover:underline">
               FAQs
             </Link>{" "}
-            and Privacy Policy.
+            and{" "}
+            <Link href="/privacy" className="text-[var(--accent)] hover:underline">
+              Privacy policy
+            </Link>
+            .
           </li>
         </ul>
       </section>

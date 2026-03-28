@@ -30,7 +30,16 @@ const faqs: FaqItem[] = [
   },
   {
     q: "Do you open my mail?",
-    a: "Operational handling is required for compliance, postage, and safety. Do not send contents you are not permitted to ship. See our privacy policy for more details.",
+    a: (
+      <>
+        Operational handling is required for compliance, postage, and safety. Do
+        not send contents you are not permitted to ship. See our{" "}
+        <Link href="/privacy" className="text-[var(--accent)] hover:underline">
+          privacy policy
+        </Link>{" "}
+        for more details.
+      </>
+    ),
   },
   {
     q: "Can this service be abused / used for harassment?",
