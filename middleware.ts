@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Whole-site password when SITE_ACCESS_PASSWORD is set (HTTP Basic Auth).
- * Omit the variable locally or in production to leave the site public.
+ * Site lock: password is verified in Node (`/api/site-auth/check`) so it works
+ * on Vercel Edge + local dev (including Turbopack), where middleware may not
+ * see `SITE_ACCESS_PASSWORD`.
  *
- * Excluded paths: Stripe webhooks, Next assets, favicon, /email/* (images in purchaser emails).
+ * Allowed without check: Stripe webhooks, auth routes, login page, Next assets,
+ * favicon, /email/* (order email images).
  */
 
 function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/webhooks/stripe")) return true;
+  if (pathname.startsWith("/api/site-auth/")) return true;
+  if (pathname === "/site-lock" || pathname.startsWith("/site-lock/"))
+    return true;
   if (pathname.startsWith("/_next/static")) return true;
   if (pathname.startsWith("/_next/image")) return true;
   if (pathname === "/favicon.ico") return true;
@@ -17,68 +22,47 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-function checkBasicAuth(
-  request: NextRequest,
-  expectedUser: string,
-  expectedPassword: string,
-): boolean {
-  const header = request.headers.get("authorization");
-  if (!header?.startsWith("Basic ")) return false;
-
-  let decoded: string;
-  try {
-    decoded = atob(header.slice(6).trim());
-  } catch {
-    return false;
-  }
-
-  const colon = decoded.indexOf(":");
-  const user = colon >= 0 ? decoded.slice(0, colon) : "";
-  const pass = colon >= 0 ? decoded.slice(colon + 1) : decoded;
-
-  if (pass !== expectedPassword) return false;
-  if (expectedUser === "") return true;
-  return user === expectedUser;
-}
-
-/** Runtime env read — avoids build-time inlining so Vercel injects values per deployment. */
-function siteAccessPassword(): string | undefined {
-  const k = "SITE_ACCESS_" + "PASSWORD";
-  const v = process.env[k];
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
-}
-
-function siteAccessUser(): string {
-  const k = "SITE_ACCESS_" + "USER";
-  const v = process.env[k];
-  return typeof v === "string" ? v.trim() : "";
-}
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
-  const password = siteAccessPassword();
-  if (!password) {
-    return NextResponse.next();
+  const checkUrl = new URL("/api/site-auth/check", request.url);
+  let res: Response;
+  try {
+    res = await fetch(checkUrl, {
+      headers: {
+        cookie: request.headers.get("cookie") ?? "",
+        authorization: request.headers.get("authorization") ?? "",
+      },
+      cache: "no-store",
+    });
+  } catch (e) {
+    console.error("[middleware] site-auth check fetch failed", e);
+    return new NextResponse("Service unavailable", { status: 503 });
   }
 
-  const expectedUser = siteAccessUser();
-
-  if (checkBasicAuth(request, expectedUser, password)) {
-    return NextResponse.next();
+  if (res.ok) {
+    try {
+      const data = (await res.json()) as { allow?: boolean };
+      if (data.allow) {
+        return NextResponse.next();
+      }
+    } catch {
+      /* fall through */
+    }
   }
 
-  return new NextResponse("Authentication required", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="ShadowSend"',
-      "Cache-Control": "no-store",
-    },
-  });
+  const isApi = pathname.startsWith("/api/");
+  if (isApi) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const url = new URL("/site-lock", request.url);
+  url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+  return NextResponse.redirect(url);
 }
 
 export const config = {
